@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,38 +8,93 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchChapterContent } from "@/lib/api";
 import { ChevronLeft, ChevronRight, RotateCcw, BookOpen } from "lucide-react";
+import Image from "next/image";
 
-// Custom Image Component with loading state
-const PageImage = ({ src, alt, index, totalImages, onImageLoad }) => {
+// --- PERUBAHAN DIMULAI DI SINI ---
+
+// Custom Image Component dengan Lazy Loading & IntersectionObserver
+const PageImage = ({ src, alt, index, onImageLoad }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imageRef = useRef(null);
+
+  useEffect(() => {
+    // Inisialisasi observer
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Jika elemen masuk ke viewport, set state dan berhenti mengamati
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      {
+        // Mulai loading 300px sebelum gambar masuk layar
+        // agar pengguna tidak melihat loading saat scroll cepat
+        rootMargin: "300px 0px",
+      }
+    );
+
+    // Mulai mengamati elemen ref
+    if (imageRef.current) {
+      observer.observe(imageRef.current);
+    }
+
+    // Cleanup observer saat komponen unmount
+    return () => {
+      if (imageRef.current) {
+        observer.unobserve(imageRef.current);
+      }
+    };
+  }, []); // Array dependensi kosong, hanya berjalan sekali
 
   return (
-    <div className="w-full flex justify-center relative">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg z-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+    <div
+      ref={imageRef}
+      className="w-full relative flex justify-center"
+      // Beri tinggi minimum agar observer punya target untuk diamati
+      // dan halaman tidak "melompat"
+      style={{ minHeight: isInView ? 'auto' : '500px' }} 
+    >
+      {/* HANYA render <Image> jika sudah 'isInView'. */}
+      {isInView ? (
+        <>
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          )}
+          <Image
+            src={hasError ? "/placeholder.png" : src}
+            alt={alt}
+            width={800}
+            height={1000}
+            className={`max-w-full h-auto object-contain shadow-md transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+            onLoad={() => {
+              setIsLoading(false);
+              if (onImageLoad) {
+                onImageLoad();
+              }
+            }}
+            onError={() => {
+              setIsLoading(false);
+              setHasError(true);
+            }}
+            priority={index < 3} // Tetap prioritaskan 3 gambar pertama
+            unoptimized
+          />
+        </>
+      ) : (
+        // Tampilkan Skeleton sebagai placeholder selagi gambar di luar layar
+        <Skeleton className="w-full" style={{ height: '500px' }} />
       )}
-      <img
-        src={hasError ? "/placeholder.png" : src}
-        alt={alt}
-        className={`max-w-full h-auto object-contain rounded-lg shadow-md transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-        onLoad={() => {
-          setIsLoading(false);
-          if (onImageLoad) {
-            onImageLoad();
-          }
-        }}
-        onError={() => {
-          setIsLoading(false);
-          setHasError(true);
-        }}
-        loading="lazy"
-      />
     </div>
   );
 };
+
+// --- PERUBAHAN BERAKHIR DI SINI ---
+
 
 export default function ReaderPage() {
   const { slug } = useParams(); // This will be [chapterSlug] (single slug parameter)
@@ -196,16 +251,19 @@ export default function ReaderPage() {
               </div>
             </div>
 
+            {/* --- PERUBAHAN PADA .MAP() --- */}
             {images.map((image, index) => (
               <PageImage
                 key={index}
                 src={image}
                 alt={`Page ${index + 1}`}
                 index={index}
-                totalImages={images.length}
                 onImageLoad={() => setLoadedImagesCount(prev => prev + 1)}
+                // Prop 'totalImages' dihapus karena tidak lagi diperlukan
               />
             ))}
+            {/* --- AKHIR PERUBAHAN .MAP() --- */}
+
           </>
         ) : (
           <div className="text-center py-12">
