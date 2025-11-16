@@ -4,14 +4,24 @@ const API_BASE_URL = process.env.API_BASE_URL || 'https://www.sankavollerei.com/
 /**
  * Fetch the latest comics
  */
-export const fetchLatestComics = async () => {
+export const fetchLatestComics = async (params = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/terbaru`);
+    // Build query string from params
+    const queryParams = new URLSearchParams(params);
+    const queryString = queryParams.toString();
+    const url = queryString ? `${API_BASE_URL}/terbaru?${queryString}` : `${API_BASE_URL}/terbaru`;
+
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const result = await response.json()
-    return result.comics
+    const result = await response.json();
+
+    // Return both comics and pagination info if available
+    return {
+      comics: result.comics || result,
+      pagination: result.pagination
+    };
   } catch (error) {
     console.error('Error fetching latest comics:', error);
     throw error;
