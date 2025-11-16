@@ -40,27 +40,16 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="flex items-center md:hidden">
-            <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
-          </div>
-
-          {/* Desktop search and home button - hidden on mobile */}
-          <div className="hidden md:flex items-center space-x-4 w-full max-w-2xl">
-            <div className="flex-1 max-w-md">
+          {/* Desktop search bar - hidden on mobile */}
+          <div className="hidden md:flex flex-1 max-w-xl mx-8">
+            <div className="flex-1">
               <form onSubmit={handleSearch} className="relative">
                 <Input
                   type="text"
                   placeholder="Search manhwa..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-12 py-6"
+                  className="pr-12 py-6 w-full"
                 />
                 <Button
                   type="submit"
@@ -71,10 +60,25 @@ export default function Navbar() {
                 </Button>
               </form>
             </div>
+          </div>
 
-            <div className="flex items-center space-x-2">
+          {/* Right side: Mobile menu button (mobile) and theme button (desktop) */}
+          <div className="flex items-center space-x-2">
+            {/* Theme button - only visible on desktop */}
+            <div className="hidden md:flex">
               <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
                 {getThemeIcon()}
+              </Button>
+            </div>
+
+            {/* Mobile menu button - only visible on mobile */}
+            <div className="md:hidden">
+              <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
               </Button>
             </div>
           </div>
@@ -84,6 +88,11 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 space-y-4">
             <div className="relative">
+              <div className="flex pb-3">
+              <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                {getThemeIcon()}
+              </Button>
+            </div>
               <form onSubmit={handleSearch} className="relative">
                 <Input
                   type="text"
@@ -101,12 +110,7 @@ export default function Navbar() {
                 </Button>
               </form>
             </div>
-
-            <div className="flex justify-center space-x-2">
-              <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
-                {getThemeIcon()}
-              </Button>
-            </div>
+            
           </div>
         )}
       </div>

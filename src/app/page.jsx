@@ -56,9 +56,7 @@ export default function HomePage() {
                     <img
                       src={comic.image}
                       alt={comic.title}
-                      className="w-full h-48 object-cover"
-                      onError={(e) => {
-                      }}
+                      className="w-full h-64 object-cover"
                     />
                     <CardContent className="p-4">
                       <h3 className="font-semibold truncate">{comic.title}</h3>
