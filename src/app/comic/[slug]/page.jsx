@@ -87,8 +87,8 @@ export default function ComicDetailPage() {
         </Button>
       </Link>
 
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="flex-shrink-0">
+      <div className="flex flex-col md:flex-row gap-8 w-full">
+        <div className="flex justify-center">
           <img
             src={comic.image || "/placeholder.png"}
             alt={comic.title}
