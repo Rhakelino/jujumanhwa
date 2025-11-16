@@ -8,8 +8,11 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('system');
   const [resolvedTheme, setResolvedTheme] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     // Check for saved theme in localStorage or default to system
     const savedTheme = localStorage.getItem('theme') || 'system';
     setTheme(savedTheme);
@@ -67,24 +70,35 @@ export function ThemeProvider({ children }) {
 
   // Listen to system preference changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        const actualTheme = mediaQuery.matches ? 'dark' : 'light';
-        setResolvedTheme(actualTheme);
-        setIsDarkMode(actualTheme === 'dark');
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = () => {
+        if (theme === 'system') {
+          const actualTheme = mediaQuery.matches ? 'dark' : 'light';
+          setResolvedTheme(actualTheme);
+          setIsDarkMode(actualTheme === 'dark');
 
-        const root = window.document.documentElement;
-        root.classList.remove('light', 'dark');
-        root.classList.add(actualTheme);
-        root.setAttribute('data-theme', actualTheme);
-        root.style.colorScheme = actualTheme;
-      }
-    };
+          const root = window.document.documentElement;
+          root.classList.remove('light', 'dark');
+          root.classList.add(actualTheme);
+          root.setAttribute('data-theme', actualTheme);
+          root.style.colorScheme = actualTheme;
+        }
+      };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
   }, [theme]);
+
+  // Return null until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <ThemeContext.Provider value={{ theme: 'system', resolvedTheme: null, isDarkMode: false, toggleTheme: () => {} }}>
+        {children}
+      </ThemeContext.Provider>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, isDarkMode, toggleTheme }}>
